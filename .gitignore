@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+#app
+/src/supabase.ts
+
 # Logs
 logs
 *.log
