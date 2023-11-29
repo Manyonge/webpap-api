@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { HttpModule } from '@nestjs/axios';
+import { PaymentsController } from './payments.controller';
 
 @Module({
-  imports: [HttpModule],
-  providers: [PaymentsService],
+  controllers: [PaymentsController],
+  providers: [PaymentsService]
 })
 export class PaymentsModule {}

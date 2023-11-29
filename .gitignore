@@ -4,6 +4,7 @@
 
 #app
 /src/supabase.ts
+.env
 
 # Logs
 logs
