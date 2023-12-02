@@ -3,12 +3,14 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import * as dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
-import { supabase } from './supabase';
+import { PaymentsGateway } from './payments.gateway';
 
 dotenv.config();
 
 @Injectable()
 export class PaymentsService {
+  constructor(private readonly paymentsGateway: PaymentsGateway) {}
+
   async create(createPaymentDto: CreatePaymentDto) {
     const username = process.env.MPESA_CONSUMER_KEY;
     const password = process.env.MPESA_CONSUMER_SECRET;
@@ -60,34 +62,20 @@ export class PaymentsService {
         TransactionDesc: 'Payment for order',
       };
 
-      await axios.post(initiateUrl, initiatePayment, {
+      const initiateResponse = await axios.post(initiateUrl, initiatePayment, {
         headers: { Authorization: `Bearer ${access_token}` },
       });
-
-      let payLoad;
-
-      const channels = supabase
-        .channel('custom-insert-channel')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'stk_callbacks' },
-          (payload) => {
-            console.log('Change received!', payload);
-            payLoad = payload;
-          },
-        )
-        .subscribe();
-
-      if (payLoad) return 'This action adds a new payment';
+      return initiateResponse.data;
     } catch (error) {
       return error;
     }
   }
 
   async handleStkCallback(paymentCallbackDto) {
-    await supabase
-      .from('stk_callbacks')
-      .insert([paymentCallbackDto.Body.stkCallback]);
-    return 'ok';
+    this.paymentsGateway.sendMessageToClients(
+      'message',
+      paymentCallbackDto.Body.stkCallback,
+    );
+    return;
   }
 }
